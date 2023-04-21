@@ -12,123 +12,80 @@ import {
   View,
   withAuthenticator,
 } from '@aws-amplify/ui-react';
-import { listNotes } from "./graphql/queries";
-import {
-  createNote as createNoteMutation,
-  deleteNote as deleteNoteMutation,
-} from "./graphql/mutations";
 
-const App = ({ signOut }) => {
-  const [notes, setNotes] = useState([]);
+function App() {
+  const [shoppingList, setShoppingList] = useState([
+    { name: 'AVACADO', 
+    price: 10, 
+    image: 'C:\Users\dell\shopping\src\assets\avocadoes.jpg',
+     quantity: 0 },
+    { name: 'BREAD', 
+    price: 5,
+    image: 'C:\Users\dell\shopping\src\assets\bread.jpg',
+     quantity: 0 },
+    { name: 'ONIONS', 
+    price: 20,
+     image: 'C:\Users\dell\shopping\src\assets\onions.jpg',
+      quantity: 0 },
+    { name: 'TOMATOES',
+     price: 15,
+      image: 'C:\Users\dell\shopping\src\assets\tomatoes.jpg', 
+      quantity: 0 },
+  ]);
+// for adding items to the cart 
+  function handleIncrement(index) {
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
 
-  async function fetchNotes() {
-    const apiData = await API.graphql({ query: listNotes });
-    const notesFromAPI = apiData.data.listNotes.items;
-    await Promise.all(
-      notesFromAPI.map(async (note) => {
-        if (note.image) {
-          const url = await Storage.get(note.name);
-          note.image = url;
-        }
-        return note;
-      })
-    );
-    setNotes(notesFromAPI);
-  }
-
-  async function createNote(event) {
-    event.preventDefault();
-    const form = new FormData(event.target);
-    const image = form.get("image");
-    const data = {
-      name: form.get("name"),
-      description: form.get("description"),
-      image: image.name,
-    };
-    if (!!data.image) await Storage.put(data.name, image);
-    await API.graphql({
-      query: createNoteMutation,
-      variables: { input: data },
-    });
-    fetchNotes();
-    event.target.reset();
-  }
-  
-
-  async function deleteNote({ id, name }) {
-    const newNotes = notes.filter((note) => note.id !== id);
-    setNotes(newNotes);
-    await Storage.remove(name);
-    await API.graphql({
-      query: deleteNoteMutation,
-      variables: { input: { id } },
+    setShoppingList ( prevList =>
+       {
+      const newList = [...prevList];
+      newList[index].quantity++;
+      return newList;
     });
   }
+// for deleting quatity of products 
+          function handleDecrement(index)
+           {
+            setShoppingList(prevList => 
+              {
+              const newList = [...prevList];
+              if (newList[index].quantity > 0) {
+                newList[index].quantity--;
+              }
+      return newList;
+    });
+  }
+
+  function handleDelete(index) 
+  {
+    setShoppingList(prevList =>
+       {
+      const newList = [...prevList];
+      newList.splice(index, 1);
+      return newList;
+    });
+  }
+
   return (
-    <View className="App">
-      <Heading level={1}>My Notes App</Heading>
-      <View as="form" margin="3rem 0" onSubmit={createNote}>
-        <Flex direction="row" justifyContent="center">
-          <TextField
-            name="name"
-            placeholder="Note Name"
-            label="Note Name"
-            labelHidden
-            variation="quiet"
-            required
-          />
-           <View
-            name="image"
-            as="input"
-            type="file"
-            style={{ alignSelf: "end" }}
-          />
-          <TextField
-            name="description"
-            placeholder="Note Description"
-            label="Note Description"
-            labelHidden
-            variation="quiet"
-            required
-          />
-          <Button type="submit" variation="primary">
-            Create Note
-          </Button>
-        </Flex>
-      </View>
-      <Heading level={2}>Current Notes</Heading>
-      <View margin="3rem 0">
-      {notes.map((note) => (
-  <Flex
-    key={note.id || note.name}
-    direction="row"
-    justifyContent="center"
-    alignItems="center"
-  >
-    <Text as="strong" fontWeight={700}>
-      {note.name}
-    </Text>
-    <Text as="span">{note.description}</Text>
-    {note.image && (
-      <Image
-        src={note.image}
-        alt={`visual aid for ${notes.name}`}
-        style={{ width: 400 }}
-      />
-    )}
-    <Button variation="link" onClick={() => deleteNote(note)}>
-      Delete note
-    </Button>
-  </Flex>
-))}
-      </View>
-      <Button onClick={signOut}>Sign Out</Button>
-    </View>
+    <div>
+      <p> SHOPPING LIST </p>
+      <ul>
+        {shoppingList.map((item, index) => (
+          <li key={index}>
+            <h3>{item.name}</h3>
+            <p>Price -  ${item.price}</p>
+            <img src={item.image} alt={item.name} /><br></br>
+            <button onClick={() => handleDecrement(index)}> - </button>
+            <span>{item.quantity}</span>
+            <button onClick={() => handleIncrement(index)}> + </button><br></br>
+            <button onClick={() => handleDelete(index)}> Delete Item </button>
+          </li>
+        ))}
+      </ul>
+      <h2>Your total is = $ {shoppingList.reduce((acc, item) => acc + item.price * item.quantity, 0)}</h2>
+    </div>
   );
-};
+}
+
 
 export default withAuthenticator(App);
