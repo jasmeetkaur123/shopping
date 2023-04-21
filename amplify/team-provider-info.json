@@ -14,6 +14,12 @@
     "categories": {
       "auth": {
         "shopping15287ccf": {}
+      },
+      "api": {
+        "shopping": {}
+      },
+      "storage": {
+        "imagestorage": {}
       }
     }
   }
